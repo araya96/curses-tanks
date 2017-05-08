@@ -244,25 +244,36 @@ void ProcessKeyboard(Player * players, int turn, int key)
 }
 
 // checks 9 spots around player for hit
-void DetectHit(Player * players, double pNx, double pNy, bool & hit)
+void DetectHit(Player * players, double pNx, double pNy, , int turn)
 {
-	if ((pNx >= players[0].position - 1) && (pNx <= players[0].position + 1))
-	{
-		if ((pNy >= players[0].position - 1) && (pNy <= players[0].position + 1))
-		{
-			players[0].hits++;
-			hit = true;
-		}
-	}
 
-	if ((pNx >= players[1].position - 1) && (pNx <= players[1].position + 1))
+if (pNy == g.ground.at(players[turn].col) + 1 || pNy == g.ground.at(players[turn].col) || pNy == g.ground.at(players[turn].col) - 1)
+{
+	if (pNx == players[turn].col + 1 || pNx == players[turn].col || pNx == players[turn].col - 1)
 	{
-		if ((pNy >= players[1].position - 1) && (pNy <= players[1].position + 1))
-		{
-			players[1].hits++;
-			hit = true;
-		}
+		players[turn].hit = players[turn].hit + 1;
+		g.InitializeGround();
+		players[turn].Initialize(rand() % (cols / 4), LEFT);
+		players[1 - turn].Draw(rand() % (cols / 4) + 3 * cols / 4 - 2, RIGHT);
+
+		Display(players, turn);
+		refresh();
 	}
+}
+// This is for if the projectile hits the other person
+if (pNy == g.ground.at(players[1 - turn].col) || pNy == g.ground.at(players[1 - turn].col) + 1 || pNy == g.ground.at(players[1 - turn].col) - 1) {
+	if (pNx == players[1 - turn].col + 1 || pNx == players[1 - turn].col || pNx == players[0].col - 1)
+	{
+		players[1 - turn].hit = players[1 - turn].hit + 1;
+		g.InitializeGround();
+		players[1 - turn].Initialize(rand() % (cols / 4), LEFT);
+		players[turn].Initialize(rand() % (cols / 4) + 3 * cols / 4 - 2, RIGHT);
+
+		Display(g, players, turn);
+		refresh();
+	}
+}
+
 }
 
 // fires at opponent
@@ -296,7 +307,7 @@ void Shoot(vector<int> & ground, Player * players, int turn)
 		double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
 		pNy = LINES - pNy;
 
-		DetectHit(players, pNx, pNy, hit);
+		DetectHit(players, pNx, pNy, hit, turn);
 
 		// reset landscape and player positions after hits
 		if (hit)
