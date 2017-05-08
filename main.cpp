@@ -9,12 +9,12 @@
 
 #if defined(WIN32)
 #include "curses.h"
+#endif
+
 #include "player.hpp"
 #include "ground.hpp"
 #include "Vec2D.hpp"
 
-
-#endif
 
 using namespace std;
 
@@ -258,12 +258,15 @@ int main()
 	Ground ground;
 	ground.Compute();
 	Player players[2];
+	Vec2D v1(0,0);
+	Vec2D v2(0,0);
 	players[0].Initialize();
 	players[1].Initialize();
 	players[0].position = rand() % 10 + 10;
 	players[1].position = rand() % 10 + COLS - 20;
 	int turn = 0;
 	bool keep_going = true;
+
 
 	// gameplay loop
 	while (keep_going)
@@ -303,7 +306,11 @@ int main()
 			}
 		}
 	}
-
+	erase();
+	addstr("Hit any key to exit");
+	refresh();
+	getch();
+	echo();
 	endwin();
 	return 0;
 }

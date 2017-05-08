@@ -32,14 +32,14 @@
     <ClInclude Include="curses.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="player.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Vec2D.hpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ground.hpp">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="player.hpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
