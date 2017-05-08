@@ -258,12 +258,17 @@ int main()
 	Ground ground;
 	ground.Compute();
 	Player players[2];
-	Vec2D v1(0,0);
-	Vec2D v2(0,0);
 	players[0].Initialize();
 	players[1].Initialize();
 	players[0].position = rand() % 10 + 10;
 	players[1].position = rand() % 10 + COLS - 20;
+	double x1 =(double)(ground.ground.at(players[0].position - 1));
+	double x2 = (double)(ground.ground.at(players[1].position - 1));
+	double y1 =(double)(players[0].position + 1);
+	double y2 = (double)(players[1].position + 1);
+	Vec2D v1(x1, y1);
+	Vec2D v2(x2, y2);
+	
 	int turn = 0;
 	bool keep_going = true;
 

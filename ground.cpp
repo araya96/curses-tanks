@@ -32,9 +32,31 @@ void Ground::Compute()
 // prints landscape with line drawing characters
 void Ground::Draw()
 {
-	{
-		for (size_t i = 0; i < ground.size(); i++) {
-			mvaddch(ground.at(i), i + 1, '-');
+	for (size_t i = 0; i < ground.size(); i++)
+		{
+			move(ground.at(i), (int)i + 1);
+
+			// first int dealt with separately
+			if (i == 0)
+			{
+				addch(ACS_HLINE);
+			}
+			// adds corners where appropriate
+			else
+			{
+				if (ground.at(i) < ground.at(i - 1))
+				{
+					addch(ACS_ULCORNER);
+				}
+				else if (ground.at(i) > ground.at(i - 1))
+				{
+					addch(ACS_LLCORNER);
+				}
+				else
+				{
+					addch(ACS_HLINE);
+				}
+			}
 		}
-	}
 }
+

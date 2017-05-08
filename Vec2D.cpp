@@ -12,9 +12,9 @@ Vec2D::Vec2D(double x, double y)
 
 }
 
-void Vec2D::IntTimesVec2D(Vec2D & v, int s)
+void Vec2D::IntTimesVec2D(vector<double> & v, int s)
 {
-	v.vec.at(0) = (int)(v.vec.at(0) * s);
+	v.at(0) = (int)(v.vec.at(0) * s);
 	v.vec.at(1) = (int)(v.column * s);
  }
 void Vec2D::DoubleTimesVec2D(Vec2D & v, double d) 
