@@ -149,11 +149,11 @@ void ProcessKeyboard(Player * players, int turn, int key)
 }
 
 // checks 9 spots around player for hit
-void DetectHit(Player * players, double pNx, double pNy, bool & hit)
+void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & hit)
 {
 	if ((pNx >= players[0].position - 1) && (pNx <= players[0].position + 1))
 	{
-		if ((pNy >= players[0].position - 1) && (pNy <= players[0].position + 1))
+		if ((pNy >= ground.ground.at(players[0].position) - 1) && (pNy <= ground.ground.at(players[0].position) + 1))
 		{
 			players[0].hits++;
 			hit = true;
@@ -162,7 +162,7 @@ void DetectHit(Player * players, double pNx, double pNy, bool & hit)
 
 	if ((pNx >= players[1].position - 1) && (pNx <= players[1].position + 1))
 	{
-		if ((pNy >= players[1].position - 1) && (pNy <= players[1].position + 1))
+		if ((pNy >= ground.ground.at(players[1].position) - 1) && (pNy <= ground.ground.at(players[1].position) + 1))
 		{
 			players[1].hits++;
 			hit = true;
@@ -179,18 +179,10 @@ void Shoot(Ground & ground, Player * players, int turn)
 	double angle = players[turn].angle / 180.0 * M_PI;
 	// calculates velocities
 	Vec2D v(cos(angle) * players[turn].power * 0.2, sin(angle) * players[turn].power * 0.2);
-
-	//double vy = sin(angle) * players[turn].power * 0.2;
-	//double vx = cos(angle) * players[turn].power * 0.2;
 	
 	// sets initial player position
 	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position));
 	p0.line = LINES - p0.line;
-
-	//double p0x = players[turn].position;
-	//double p0y = ground.ground.at(players[turn].position);
-	// higher ground numbers are lower altitudes (0 is first line, etc).
-	//p0y = LINES - p0y;
 
 	// flips direction for player 2
 	if (turn == 1)
@@ -206,24 +198,21 @@ void Shoot(Ground & ground, Player * players, int turn)
 
 		Vec2D a(0, -.98);
 		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
-		//double pNx = p0x + (step * vx);
-		//double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
-		//pNy = LINES - pNy;
-
+		
 		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
 		pN.line = LINES - pN.line;
 
 
-		DetectHit(players, pN.column, pN.line, hit);
+		DetectHit(players, ground, pN.column, pN.line, hit);
 
 		// reset landscape and player positions after hits
-		if (hit)
+		if (hit == true)
 		{
-			clear();
+			erase();
+			ground.ground.resize(0);
 			ground.Compute();
 			players[0].position = rand() % 10 + 10;
 			players[1].position = rand() % 10 + COLS - 20;
-			hit = false;
 			break;
 		}
 
@@ -248,11 +237,10 @@ void Shoot(Ground & ground, Player * players, int turn)
 		if (pN.line > 2)
 		{
 			addch('*');
+			refresh();
+			// shot happens incrementally
+			Sleep(30);
 		}
-
-		refresh();
-		// shot happens incrementally
-		Sleep(30);
 	}
 }
 
@@ -278,24 +266,24 @@ int main()
 	double x2 = (double)(ground.ground.at(players[1].position - 1));
 	double y1 =(double)(players[0].position + 1);
 	double y2 = (double)(players[1].position + 1);
-	//Vec2D v1(x1, y1);
-	//Vec2D v2(x2, y2);
+
 	
 	int turn = 0;
 	bool keep_going = true;
 
+	
 
 	// gameplay loop
 	while (keep_going)
 	{
-		int key = getch();
-
 		// drawing screen
 		border(0, 0, 0, 0, 0, 0, 0, 0);
 		ground.Draw();
 		players[0].Draw(ground);
 		players[1].Draw(ground);
 		Display(players, turn);
+
+		int key = getch();
 
 		ProcessKeyboard(players, turn, key);
 
@@ -322,6 +310,7 @@ int main()
 				players[1].position = rand() % 10 + COLS - 20;
 			}
 		}
+		refresh();
 	}
 	erase();
 	addstr("Hit any key to exit");

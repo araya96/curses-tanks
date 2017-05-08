@@ -27,6 +27,7 @@ void Ground::Compute()
 		}
 		ground.push_back(h);
 	}
+	
 }
 
 // prints landscape with line drawing characters
