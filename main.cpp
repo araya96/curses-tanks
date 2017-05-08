@@ -11,108 +11,13 @@
 #include "curses.h"
 #endif
 
+#include "player.hpp"
+#include "ground.hpp"
+#include "Vec2D.hpp"
+
+
 using namespace std;
 
-// determines the landscape
-void ComputeGround(vector<int> & ground)
-{
-	int initHeight = 0;
-	initHeight = rand() % 4 + (LINES - 6);
-
-	// loops through ground and adds hills/valleys
-	for (size_t i = 0; i < ground.size(); i++)
-	{
-		int delta = 0;
-		int roll = rand() % 100;
-
-		// landscape moves up or down 10% of time
-		if (roll < 10)
-		{
-			delta = 1;
-		}
-		else if (roll < 20)
-		{
-			delta = -1;
-		}
-
-		// changes added after first int
-		if (i == 0)
-		{
-			ground.at(i) = initHeight + delta;
-		}
-		else
-		{
-			ground.at(i) = ground.at(i - 1) + delta;
-		}
-
-		// boundaries set
-		if (ground.at(i) >= LINES - 1)
-		{
-			--ground.at(i);
-			delta = 0;
-		}
-		if (ground.at(i) < LINES - 15)
-		{
-			++ground.at(i);
-			delta = 0;
-		}
-	}
-}
-
-// prints landscape with line drawing characters
-void DrawGround(vector<int> ground)
-{
-	for (size_t i = 0; i < ground.size(); i++)
-	{
-		move(ground.at(i), (int)i + 1);
-
-		// first int dealt with separately
-		if (i == 0)
-		{
-			addch(ACS_HLINE);
-		}
-		// adds corners where appropriate
-		else
-		{
-			if (ground.at(i) < ground.at(i - 1))
-			{
-				addch(ACS_ULCORNER);
-			}
-			else if (ground.at(i) > ground.at(i - 1))
-			{
-				addch(ACS_LLCORNER);
-			}
-			else
-			{
-				addch(ACS_HLINE);
-			}
-		}
-	}
-}
-
-struct Player
-{
-	void Initialize();
-	void Draw(vector<int> ground);
-	double angle;
-	double power;
-	int position;
-	int hits;
-};
-
-void Player::Initialize()
-{
-	position = hits = 0;
-	angle = 45.0;
-	power = 50.0;
-}
-
-// draws a player on the landscape
-void Player::Draw(vector<int> ground)
-{
-	move(ground.at(position) - 1, position + 1);
-	addch('o');
-}
 
 // sets up display of stats
 void Display(Player * players, int turn)
@@ -265,25 +170,32 @@ void DetectHit(Player * players, double pNx, double pNy, bool & hit)
 	}
 }
 
+
 // fires at opponent
-void Shoot(vector<int> & ground, Player * players, int turn)
+void Shoot(Ground & ground, Player * players, int turn)
 {
 	bool hit = false;
 	// converts degrees to radians
 	double angle = players[turn].angle / 180.0 * M_PI;
 	// calculates velocities
-	double vy = sin(angle) * players[turn].power * 0.2;
-	double vx = cos(angle) * players[turn].power * 0.2;
+	Vec2D v(cos(angle) * players[turn].power * 0.2, sin(angle) * players[turn].power * 0.2);
+
+	//double vy = sin(angle) * players[turn].power * 0.2;
+	//double vx = cos(angle) * players[turn].power * 0.2;
+	
 	// sets initial player position
-	double p0x = players[turn].position;
-	double p0y = ground.at(players[turn].position);
+	Vec2D p0(players[turn].position, LINES - ground.ground.at(players[turn].position));
+
+
+	//double p0x = players[turn].position;
+	//double p0y = ground.ground.at(players[turn].position);
 	// higher ground numbers are lower altitudes (0 is first line, etc).
-	p0y = LINES - p0y;
+	//p0y = LINES - p0y;
 
 	// flips direction for player 2
 	if (turn == 1)
 	{
-		vx = -vx;
+		v.column = -v.column;
 	}
 
 	// updates position
@@ -291,42 +203,49 @@ void Shoot(vector<int> & ground, Player * players, int turn)
 	{
 		// loops through time steps
 		double step = i / 5.0;
-		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
-		double pNx = p0x + (step * vx);
-		double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
-		pNy = LINES - pNy;
 
-		DetectHit(players, pNx, pNy, hit);
+		Vec2D a(0, -.98);
+		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
+		//double pNx = p0x + (step * vx);
+		//double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
+		//pNy = LINES - pNy;
+
+		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
+
+
+
+		DetectHit(players, pN.column, pN.line, hit);
 
 		// reset landscape and player positions after hits
 		if (hit)
 		{
 			clear();
-			ComputeGround(ground);
+			ground.Compute();
 			players[0].position = rand() % 10 + 10;
 			players[1].position = rand() % 10 + COLS - 20;
+			hit = false;
 			break;
 		}
 
 		// boundary checking
-		if (pNx < 1 || pNx >= COLS - 2)
+		if (pN.column < 1 || pN.column >= COLS - 2)
 		{
 			clear();
 			break;
 		}
 
 		// stops when shot lands
-		if (pNy >= ground.at((int)pNx))
+		if (pN.line >= ground.ground.at((int)pN.column))
 		{
 			clear();
 			break;
 		}
 
 		// adds stars along trajectory
-		move((int)pNy - 1, (int)pNx + 1);
+		move((int)pN.line - 1, (int)pN.column + 1);
 
 		// only add stars when trajectory is visible
-		if (pNy > 2)
+		if (pN.line > 2)
 		{
 			addch('*');
 		}
@@ -348,15 +267,23 @@ int main()
 
 	// initializing things
 	srand((unsigned int)time(nullptr));
-	vector<int> ground(COLS - 2);
-	ComputeGround(ground);
+	Ground ground;
+	ground.Compute();
 	Player players[2];
 	players[0].Initialize();
 	players[1].Initialize();
 	players[0].position = rand() % 10 + 10;
 	players[1].position = rand() % 10 + COLS - 20;
+	double x1 =(double)(ground.ground.at(players[0].position - 1));
+	double x2 = (double)(ground.ground.at(players[1].position - 1));
+	double y1 =(double)(players[0].position + 1);
+	double y2 = (double)(players[1].position + 1);
+	//Vec2D v1(x1, y1);
+	//Vec2D v2(x2, y2);
+	
 	int turn = 0;
 	bool keep_going = true;
+
 
 	// gameplay loop
 	while (keep_going)
@@ -365,7 +292,7 @@ int main()
 
 		// drawing screen
 		border(0, 0, 0, 0, 0, 0, 0, 0);
-		DrawGround(ground);
+		ground.Draw();
 		players[0].Draw(ground);
 		players[1].Draw(ground);
 		Display(players, turn);
@@ -388,7 +315,7 @@ int main()
 			if (keep_going)
 			{
 				turn = 0;
-				ComputeGround(ground);
+				ground.Compute();
 				players[0].Initialize();
 				players[1].Initialize();
 				players[0].position = rand() % 10 + 10;
@@ -396,7 +323,11 @@ int main()
 			}
 		}
 	}
-
+	erase();
+	addstr("Hit any key to exit");
+	refresh();
+	getch();
+	echo();
 	endwin();
 	return 0;
 }
