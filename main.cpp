@@ -1,16 +1,118 @@
+#define _USE_MATH_DEFINES
 #include <iostream>
-#include <sstream>
-#include <vector>
+#include <string>
 #include <ctime>
+#include <vector>
 #include <cmath>
+#include <sstream>
 #include <Windows.h>
 
+#if defined(WIN32)
 #include "curses.h"
-#include "ground.hpp"
-#include "player.hpp"
+#endif
 
 using namespace std;
-const double PI = 3.141592653589793238463;
+
+// determines the landscape
+void ComputeGround(vector<int> & ground)
+{
+	int initHeight = 0;
+	initHeight = rand() % 4 + (LINES - 6);
+
+	// loops through ground and adds hills/valleys
+	for (size_t i = 0; i < ground.size(); i++)
+	{
+		int delta = 0;
+		int roll = rand() % 100;
+
+		// landscape moves up or down 10% of time
+		if (roll < 10)
+		{
+			delta = 1;
+		}
+		else if (roll < 20)
+		{
+			delta = -1;
+		}
+
+		// changes added after first int
+		if (i == 0)
+		{
+			ground.at(i) = initHeight + delta;
+		}
+		else
+		{
+			ground.at(i) = ground.at(i - 1) + delta;
+		}
+
+		// boundaries set
+		if (ground.at(i) >= LINES - 1)
+		{
+			--ground.at(i);
+			delta = 0;
+		}
+		if (ground.at(i) < LINES - 15)
+		{
+			++ground.at(i);
+			delta = 0;
+		}
+	}
+}
+
+// prints landscape with line drawing characters
+void DrawGround(vector<int> ground)
+{
+	for (size_t i = 0; i < ground.size(); i++)
+	{
+		move(ground.at(i), (int)i + 1);
+
+		// first int dealt with separately
+		if (i == 0)
+		{
+			addch(ACS_HLINE);
+		}
+		// adds corners where appropriate
+		else
+		{
+			if (ground.at(i) < ground.at(i - 1))
+			{
+				addch(ACS_ULCORNER);
+			}
+			else if (ground.at(i) > ground.at(i - 1))
+			{
+				addch(ACS_LLCORNER);
+			}
+			else
+			{
+				addch(ACS_HLINE);
+			}
+		}
+	}
+}
+
+struct Player
+{
+	void Initialize();
+	void Draw(vector<int> ground);
+	double angle;
+	double power;
+	int position;
+	int hits;
+};
+
+void Player::Initialize()
+{
+	position = hits = 0;
+	angle = 45.0;
+	power = 50.0;
+}
+
+// draws a player on the landscape
+void Player::Draw(vector<int> ground)
+{
+	move(ground.at(position) - 1, position + 1);
+	addch('o');
+}
 
 // sets up display of stats
 void Display(Player * players, int turn)
@@ -164,17 +266,17 @@ void DetectHit(Player * players, double pNx, double pNy, bool & hit)
 }
 
 // fires at opponent
-void Shoot(Ground & g, Player * players, int turn)
+void Shoot(vector<int> & ground, Player * players, int turn)
 {
 	bool hit = false;
 	// converts degrees to radians
-	double angle = players[turn].angle / 180.0 * PI;
+	double angle = players[turn].angle / 180.0 * M_PI;
 	// calculates velocities
 	double vy = sin(angle) * players[turn].power * 0.2;
 	double vx = cos(angle) * players[turn].power * 0.2;
 	// sets initial player position
 	double p0x = players[turn].position;
-	double p0y = g.ground.at(players[turn].position);
+	double p0y = ground.at(players[turn].position);
 	// higher ground numbers are lower altitudes (0 is first line, etc).
 	p0y = LINES - p0y;
 
@@ -200,7 +302,7 @@ void Shoot(Ground & g, Player * players, int turn)
 		if (hit)
 		{
 			clear();
-			g.Compute();
+			ComputeGround(ground);
 			players[0].position = rand() % 10 + 10;
 			players[1].position = rand() % 10 + COLS - 20;
 			break;
@@ -214,7 +316,7 @@ void Shoot(Ground & g, Player * players, int turn)
 		}
 
 		// stops when shot lands
-		if (pNy >= g.ground.at((int)pNx))
+		if (pNy >= ground.at((int)pNx))
 		{
 			clear();
 			break;
@@ -246,8 +348,8 @@ int main()
 
 	// initializing things
 	srand((unsigned int)time(nullptr));
-	Ground g;
-	g.Compute();
+	vector<int> ground(COLS - 2);
+	ComputeGround(ground);
 	Player players[2];
 	players[0].Initialize();
 	players[1].Initialize();
@@ -263,9 +365,9 @@ int main()
 
 		// drawing screen
 		border(0, 0, 0, 0, 0, 0, 0, 0);
-		g.Draw();
-		players[0].Draw(g.ground);
-		players[1].Draw(g.ground);
+		DrawGround(ground);
+		players[0].Draw(ground);
+		players[1].Draw(ground);
 		Display(players, turn);
 
 		ProcessKeyboard(players, turn, key);
@@ -273,7 +375,7 @@ int main()
 		// press enter to shoot
 		if (key == 10)
 		{
-			Shoot(g, players, turn);
+			Shoot(ground, players, turn);
 			turn = 1 - turn;
 		}
 
@@ -286,7 +388,7 @@ int main()
 			if (keep_going)
 			{
 				turn = 0;
-				g.Compute();
+				ComputeGround(ground);
 				players[0].Initialize();
 				players[1].Initialize();
 				players[0].position = rand() % 10 + 10;

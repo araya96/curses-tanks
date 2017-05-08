@@ -1,10 +1,10 @@
 #pragma once
-#include "ground.hpp"
+#include <vector>
 
 struct Player
 {
 	void Initialize();
-	void Draw(vector<int> ground);
+	void Draw(std::vector<int> ground);
 	double angle;
 	double power;
 	int position;
