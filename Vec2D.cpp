@@ -5,23 +5,31 @@
 
 using namespace std;
 
+Vec2D::Vec2D()
+{
+	line = 0.0;
+	column = 0.0;
+}
+
 Vec2D::Vec2D(double x, double y)
 {
 	line = y;
 	column = x;
-
 }
 
-void Vec2D::IntTimesVec2D(vector<double> & v, int s)
+Vec2D Vec2D::operator*(const int s)  
 {
-	v.at(0) = (int)(v.vec.at(0) * s);
-	v.vec.at(1) = (int)(v.column * s);
+	return Vec2D(column * s, line * s);
  }
-void Vec2D::DoubleTimesVec2D(Vec2D & v, double d) 
+Vec2D Vec2D::operator*(double d) 
 {
-
+	return Vec2D(column * d, line * d);
 }
-void Vec2D::Vec2DPlusVec2D(Vec2D & v, Vec2D & v2)
+Vec2D Vec2D::operator+(Vec2D & v2)
 {
-
+	return Vec2D(column + v2.column, line + v2.line);
+}
+Vec2D Vec2D:: operator/(int s)
+{
+	return Vec2D(column / s, line / s);
 }

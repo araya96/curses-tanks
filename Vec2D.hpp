@@ -1,15 +1,17 @@
 #pragma once
 #include <vector>
 
-struct Vec2D
+class Vec2D
 {
+public:
 	double column;
 	double line;
 
 	std::vector<double> vec;
-
+	Vec2D();
 	Vec2D(double x, double y);
-	void IntTimesVec2D(Vec2D & v, int s);
-	void DoubleTimesVec2D(Vec2D & v, double d);
-	void Vec2DPlusVec2D(Vec2D & v, Vec2D & v2);
+	Vec2D operator*(const int);
+	Vec2D operator*(double d);
+	Vec2D operator+(Vec2D & v2);
+	Vec2D operator/(int);
 };

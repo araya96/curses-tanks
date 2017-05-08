@@ -178,18 +178,24 @@ void Shoot(Ground & ground, Player * players, int turn)
 	// converts degrees to radians
 	double angle = players[turn].angle / 180.0 * M_PI;
 	// calculates velocities
-	double vy = sin(angle) * players[turn].power * 0.2;
-	double vx = cos(angle) * players[turn].power * 0.2;
+	Vec2D v(cos(angle) * players[turn].power * 0.2, sin(angle) * players[turn].power * 0.2);
+
+	//double vy = sin(angle) * players[turn].power * 0.2;
+	//double vx = cos(angle) * players[turn].power * 0.2;
+	
 	// sets initial player position
-	double p0x = players[turn].position;
-	double p0y = ground.ground.at(players[turn].position);
+	Vec2D p0(players[turn].position, LINES - ground.ground.at(players[turn].position));
+
+
+	//double p0x = players[turn].position;
+	//double p0y = ground.ground.at(players[turn].position);
 	// higher ground numbers are lower altitudes (0 is first line, etc).
-	p0y = LINES - p0y;
+	//p0y = LINES - p0y;
 
 	// flips direction for player 2
 	if (turn == 1)
 	{
-		vx = -vx;
+		v.column = -v.column;
 	}
 
 	// updates position
@@ -197,12 +203,18 @@ void Shoot(Ground & ground, Player * players, int turn)
 	{
 		// loops through time steps
 		double step = i / 5.0;
-		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
-		double pNx = p0x + (step * vx);
-		double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
-		pNy = LINES - pNy;
 
-		DetectHit(players, pNx, pNy, hit);
+		Vec2D a(0, -.98);
+		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
+		//double pNx = p0x + (step * vx);
+		//double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
+		//pNy = LINES - pNy;
+
+		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
+
+
+
+		DetectHit(players, pN.column, pN.line, hit);
 
 		// reset landscape and player positions after hits
 		if (hit)
@@ -216,24 +228,24 @@ void Shoot(Ground & ground, Player * players, int turn)
 		}
 
 		// boundary checking
-		if (pNx < 1 || pNx >= COLS - 2)
+		if (pN.column < 1 || pN.column >= COLS - 2)
 		{
 			clear();
 			break;
 		}
 
 		// stops when shot lands
-		if (pNy >= ground.ground.at((int)pNx))
+		if (pN.line >= ground.ground.at((int)pN.column))
 		{
 			clear();
 			break;
 		}
 
 		// adds stars along trajectory
-		move((int)pNy - 1, (int)pNx + 1);
+		move((int)pN.line - 1, (int)pN.column + 1);
 
 		// only add stars when trajectory is visible
-		if (pNy > 2)
+		if (pN.line > 2)
 		{
 			addch('*');
 		}
@@ -266,8 +278,8 @@ int main()
 	double x2 = (double)(ground.ground.at(players[1].position - 1));
 	double y1 =(double)(players[0].position + 1);
 	double y2 = (double)(players[1].position + 1);
-	Vec2D v1(x1, y1);
-	Vec2D v2(x2, y2);
+	//Vec2D v1(x1, y1);
+	//Vec2D v2(x2, y2);
 	
 	int turn = 0;
 	bool keep_going = true;
