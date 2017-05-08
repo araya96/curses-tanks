@@ -9,97 +9,14 @@
 
 #if defined(WIN32)
 #include "curses.h"
+#include "player.hpp"
+#include "ground.hpp"
+#include "Vec2D.hpp"
+
+
 #endif
 
 using namespace std;
-
-// determines the landscape
-void ComputeGround(vector<int> & ground)
-{
-	int initHeight = 0;
-	initHeight = rand() % 4 + (LINES - 6);
-
-	// loops through ground and adds hills/valleys
-	for (size_t i = 0; i < ground.size(); i++)
-	{
-		int delta = 0;
-		int roll = rand() % 100;
-
-		// landscape moves up or down 10% of time
-		if (roll < 10)
-		{
-			delta = 1;
-		}
-		else if (roll < 20)
-		{
-			delta = -1;
-		}
-
-		// changes added after first int
-		if (i == 0)
-		{
-			ground.at(i) = initHeight + delta;
-		}
-		else
-		{
-			ground.at(i) = ground.at(i - 1) + delta;
-		}
-
-		// boundaries set
-		if (ground.at(i) >= LINES - 1)
-		{
-			--ground.at(i);
-			delta = 0;
-		}
-		if (ground.at(i) < LINES - 15)
-		{
-			++ground.at(i);
-			delta = 0;
-		}
-	}
-}
-
-// prints landscape with line drawing characters
-void DrawGround(vector<int> ground)
-{
-	for (size_t i = 0; i < ground.size(); i++)
-	{
-		move(ground.at(i), (int)i + 1);
-
-		// first int dealt with separately
-		if (i == 0)
-		{
-			addch(ACS_HLINE);
-		}
-		// adds corners where appropriate
-		else
-		{
-			if (ground.at(i) < ground.at(i - 1))
-			{
-				addch(ACS_ULCORNER);
-			}
-			else if (ground.at(i) > ground.at(i - 1))
-			{
-				addch(ACS_LLCORNER);
-			}
-			else
-			{
-				addch(ACS_HLINE);
-			}
-		}
-	}
-}
-
-struct Player
-{
-	void Initialize();
-	void Draw(vector<int> ground);
-	double angle;
-	double power;
-	int position;
-	int hits;
-};
-
 
 
 // sets up display of stats
@@ -255,7 +172,7 @@ void DetectHit(Player * players, double pNx, double pNy, bool & hit)
 
 
 // fires at opponent
-void Shoot(vector<int> & ground, Player * players, int turn)
+void Shoot(Ground & ground, Player * players, int turn)
 {
 	bool hit = false;
 	// converts degrees to radians
@@ -265,7 +182,7 @@ void Shoot(vector<int> & ground, Player * players, int turn)
 	double vx = cos(angle) * players[turn].power * 0.2;
 	// sets initial player position
 	double p0x = players[turn].position;
-	double p0y = ground.at(players[turn].position);
+	double p0y = ground.ground.at(players[turn].position);
 	// higher ground numbers are lower altitudes (0 is first line, etc).
 	p0y = LINES - p0y;
 
@@ -291,7 +208,7 @@ void Shoot(vector<int> & ground, Player * players, int turn)
 		if (hit)
 		{
 			clear();
-			ComputeGround(ground);
+			ground.Compute();
 			players[0].position = rand() % 10 + 10;
 			players[1].position = rand() % 10 + COLS - 20;
 			hit = false;
@@ -306,7 +223,7 @@ void Shoot(vector<int> & ground, Player * players, int turn)
 		}
 
 		// stops when shot lands
-		if (pNy >= ground.at((int)pNx))
+		if (pNy >= ground.ground.at((int)pNx))
 		{
 			clear();
 			break;
@@ -338,8 +255,8 @@ int main()
 
 	// initializing things
 	srand((unsigned int)time(nullptr));
-	vector<int> ground(COLS - 2);
-	ComputeGround(ground);
+	Ground ground;
+	ground.Compute();
 	Player players[2];
 	players[0].Initialize();
 	players[1].Initialize();
@@ -355,7 +272,7 @@ int main()
 
 		// drawing screen
 		border(0, 0, 0, 0, 0, 0, 0, 0);
-		DrawGround(ground);
+		ground.Draw();
 		players[0].Draw(ground);
 		players[1].Draw(ground);
 		Display(players, turn);
@@ -378,7 +295,7 @@ int main()
 			if (keep_going)
 			{
 				turn = 0;
-				ComputeGround(ground);
+				ground.Compute();
 				players[0].Initialize();
 				players[1].Initialize();
 				players[0].position = rand() % 10 + 10;

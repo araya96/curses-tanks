@@ -1,5 +1,6 @@
 #include "curses.h"
 #include "player.hpp"
+#include "ground.hpp"
 
 using namespace std;
 
@@ -11,8 +12,8 @@ void Player::Initialize()
 }
 
 // draws a player on the landscape
-void Player::Draw(vector<int> ground)
+void Player::Draw(Ground & ground)
 {
-	move(ground.at(position) - 1, position + 1);
-	addch('o');
+	mvaddch(ground.ground.at(position) - 1, position + 1, '0');
+
 }
