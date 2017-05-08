@@ -11,5 +11,5 @@ struct Ground
 
 Ground::Ground()
 {
-	vector<int> ground(COLS - 2);
+	std::vector<int> ground(COLS - 2);
 }
