@@ -297,7 +297,7 @@ void Shoot(vector<int> & ground, Player * players, int turn)
 		double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
 		pNy = LINES - pNy;
 
-		DetectHit(players, pNx, pNy, hit, turn);
+		DetectHit(players, pNx, pNy, hit);
 
 		// reset landscape and player positions after hits
 		if (hit)
@@ -306,6 +306,7 @@ void Shoot(vector<int> & ground, Player * players, int turn)
 			ComputeGround(ground);
 			players[0].position = rand() % 10 + 10;
 			players[1].position = rand() % 10 + COLS - 20;
+			hit = false;
 			break;
 		}
 
