@@ -1,6 +1,5 @@
 #include <iostream>
 #include <sstream>
-#include <iomanip>
 #include <vector>
 #include <ctime>
 #include <cmath>
@@ -11,139 +10,291 @@
 #include "player.hpp"
 
 using namespace std;
-
-extern int lines;
-extern int cols;
-extern int base_height_divisor;
-extern int max_height_divisor;
-
 const double PI = 3.141592653589793238463;
 
-void DrawScreen(Ground & g, Player * players, int turn)
+// sets up display of stats
+void Display(Player * players, int turn)
 {
-	erase();
-	box(stdscr, 0, 0);
-	g.Draw();
-	players[0].Draw(g);
-	players[1].Draw(g);
-	players[0].DrawSettings(turn);
-	players[1].DrawSettings(turn);
-	refresh();
+	// highlights player whose turn it is
+	if (turn == 0)
+	{
+		attron(A_REVERSE);
+	}
+
+	move(1, 2);
+	addstr("Player 1");
+
+	if (turn == 0)
+	{
+		attroff(A_REVERSE);
+	}
+
+	move(2, 2);
+	stringstream ss;
+	ss << "Angle: " << players[0].angle;
+	addstr(ss.str().c_str());
+
+	move(3, 2);
+	ss = stringstream();
+	ss << "Power: " << players[0].power;
+	addstr(ss.str().c_str());
+
+	move(4, 2);
+	ss = stringstream();
+	ss << "Hits: " << players[0].hits;
+	addstr(ss.str().c_str());
+
+	if (turn == 1)
+	{
+		attron(A_REVERSE);
+	}
+
+	move(1, COLS - 11);
+	addstr("Player 2");
+
+	if (turn == 1)
+	{
+		attroff(A_REVERSE);
+	}
+
+	move(2, COLS - 11);
+	ss = stringstream();
+	ss << "Angle: " << players[1].angle;
+	addstr(ss.str().c_str());
+
+	move(3, COLS - 11);
+	ss = stringstream();
+	ss << "Power: " << players[1].power;
+	addstr(ss.str().c_str());
+
+	move(4, COLS - 11);
+	ss = stringstream();
+	ss << "Hits: " << players[1].hits;
+	addstr(ss.str().c_str());
 }
 
-//http://www.iforce2d.net/b2dtut/projected-trajectory
+// asks if player wants to restart game
+void GameOver(bool & keep_going)
+{
+	bool asking = true;
 
+	while (asking)
+	{
+		clear();
+		move(13, 37);
+		addstr("You died.  Do you want to play again? (y/n)");
+		char answer = getch();
+
+		if (answer == 'n')
+		{
+			keep_going = false;
+			asking = false;
+		}
+		else if (answer == 'y')
+		{
+			asking = false;
+		}
+	}
+
+	clear();
+}
+
+// uses arrow keys to adjust settings
+void ProcessKeyboard(Player * players, int turn, int key)
+{
+	switch (key)
+	{
+	case KEY_UP:
+		players[turn].power++;
+		if ((players[turn].power > 90.0))
+		{
+			players[turn].power = 90.0;
+		}
+		break;
+
+	case KEY_DOWN:
+		players[turn].power--;
+		if ((players[turn].power < 0.0))
+		{
+			players[turn].power = 0.0;
+		}
+		break;
+
+	case KEY_LEFT:
+		players[turn].angle--;
+		if ((players[turn].angle < 0.0))
+		{
+			players[turn].angle = 0.0;
+		}
+		break;
+
+	case KEY_RIGHT:
+		players[turn].angle++;
+		if ((players[turn].angle > 90.0))
+		{
+			players[turn].angle = 90.0;
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+// checks 9 spots around player for hit
+void DetectHit(Player * players, double pNx, double pNy, bool & hit)
+{
+	if ((pNx >= players[0].position - 1) && (pNx <= players[0].position + 1))
+	{
+		if ((pNy >= players[0].position - 1) && (pNy <= players[0].position + 1))
+		{
+			players[0].hits++;
+			hit = true;
+		}
+	}
+
+	if ((pNx >= players[1].position - 1) && (pNx <= players[1].position + 1))
+	{
+		if ((pNy >= players[1].position - 1) && (pNy <= players[1].position + 1))
+		{
+			players[1].hits++;
+			hit = true;
+		}
+	}
+}
+
+// fires at opponent
 void Shoot(Ground & g, Player * players, int turn)
 {
+	bool hit = false;
+	// converts degrees to radians
 	double angle = players[turn].angle / 180.0 * PI;
-	double y_component = sin(angle) * players[turn].power * 0.2;
-	double x_component = cos(angle) * players[turn].power * 0.2;
-	
-	double pNx;
-	double pNy;
-
-	if (players[turn].s == RIGHT)
-		x_component = -x_component;
-
-	double p0x = players[turn].col;
-	double p0y = g.ground.at(players[turn].col);
+	// calculates velocities
+	double vy = sin(angle) * players[turn].power * 0.2;
+	double vx = cos(angle) * players[turn].power * 0.2;
+	// sets initial player position
+	double p0x = players[turn].position;
+	double p0y = g.ground.at(players[turn].position);
 	// higher ground numbers are lower altitudes (0 is first line, etc).
-	p0y = lines - p0y;
+	p0y = LINES - p0y;
+
+	// flips direction for player 2
+	if (turn == 1)
+	{
+		vx = -vx;
+	}
+
+	// updates position
 	for (int i = 1; i < 5000; i++)
 	{
-		double di = i / 5.0;
+		// loops through time steps
+		double step = i / 5.0;
+		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
+		double pNx = p0x + (step * vx);
+		double pNy = p0y + (step * vy) + ((step * step + step) * -0.98) / 2.0;
+		pNy = LINES - pNy;
 
-		pNx = (int)(p0x + di * x_component);
-		pNy = p0y + di * y_component + (di * di + di) * -0.98 / 2.0;
-		pNy = (int)(lines - pNy);
-		if (pNx < 1 || pNx >= cols - 2)
+		DetectHit(players, pNx, pNy, hit);
+
+		// reset landscape and player positions after hits
+		if (hit)
+		{
+			clear();
+			g.Compute();
+			players[0].position = rand() % 10 + 10;
+			players[1].position = rand() % 10 + COLS - 20;
 			break;
-		if (pNy < 1) {
-			Sleep(50);
-			continue;
 		}
-	//	if (pNy >= lines - 2)
-	//		break;
-		if (pNy > g.ground.at((int)pNx))
-			break;
 
+		// boundary checking
+		if (pNx < 1 || pNx >= COLS - 2)
+		{
+			clear();
+			break;
+		}
+
+		// stops when shot lands
+		if (pNy >= g.ground.at((int)pNx))
+		{
+			clear();
+			break;
+		}
+
+		// adds stars along trajectory
 		move((int)pNy - 1, (int)pNx + 1);
-		addch('*');
+
+		// only add stars when trajectory is visible
+		if (pNy > 2)
+		{
+			addch('*');
+		}
+
 		refresh();
-		Sleep(50);
+		// shot happens incrementally
+		Sleep(30);
 	}
 }
 
-int main(int argc, char * argv[])
+int main()
 {
-	srand((unsigned int)time(nullptr));
-
-	int turn = 0;
-	bool keep_going = true;
-	Ground g;
-	Player players[2];
-
+	// setting up curses
 	initscr();
 	noecho();
-	resize_term(lines, cols);
-	keypad(stdscr, 1);
+	curs_set(0);
+	nodelay(stdscr, 1);
+	keypad(stdscr, true);
 
-	g.InitializeGround();
-	players[0].Initialize(rand() % (cols / 4), LEFT);
-	players[1].Initialize(rand() % (cols / 4) + 3 * cols / 4 - 2, RIGHT);
+	// initializing things
+	srand((unsigned int)time(nullptr));
+	Ground g;
+	g.Compute();
+	Player players[2];
+	players[0].Initialize();
+	players[1].Initialize();
+	players[0].position = rand() % 10 + 10;
+	players[1].position = rand() % 10 + COLS - 20;
+	int turn = 0;
+	bool keep_going = true;
 
-	DrawScreen(g, players, turn);
+	// gameplay loop
 	while (keep_going)
 	{
-		bool show_char = false;
-		int c = getch();
-		switch (c)
+		int key = getch();
+
+		// drawing screen
+		border(0, 0, 0, 0, 0, 0, 0, 0);
+		g.Draw();
+		players[0].Draw(g.ground);
+		players[1].Draw(g.ground);
+		Display(players, turn);
+
+		ProcessKeyboard(players, turn, key);
+
+		// press enter to shoot
+		if (key == 10)
 		{
-		case 27:
-			keep_going = false;
-			break;
-
-		case '<':
-			players[turn].PowerDown();
-			break;
-
-		case '>':
-			players[turn].PowerUp();
-			break;
-
-		case 'u':
-			players[turn].AngleUp();
-			break;
-
-		case 'd':
-			players[turn].AngleDown();
-			break;
-
-		case 10:
-		case KEY_ENTER:
-		case PADENTER:
 			Shoot(g, players, turn);
 			turn = 1 - turn;
-			break;
-
-		default:
-			show_char = true;
-			break;
 		}
-		DrawScreen(g, players, turn);
-		if (show_char) {
-			move(0, 1);
-			stringstream ss;
-			ss << setw(4) << c << " ";
-			addstr(ss.str().c_str());
-			refresh();
+
+		// checks if players are out of lives
+		if (players[0].hits > 2 || players[1].hits > 2)
+		{
+			GameOver(keep_going);
+
+			// resets for new game
+			if (keep_going)
+			{
+				turn = 0;
+				g.Compute();
+				players[0].Initialize();
+				players[1].Initialize();
+				players[0].position = rand() % 10 + 10;
+				players[1].position = rand() % 10 + COLS - 20;
+			}
 		}
 	}
-	erase();
-	addstr("Hit any key to exit");
-	refresh();
-	getch();
-	echo();
+
 	endwin();
 	return 0;
 }

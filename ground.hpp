@@ -1,11 +1,15 @@
 #pragma once
 #include <vector>
 
-class Ground
+struct Ground
 {
-public:
-	void InitializeGround();
+	Ground();
+	void Compute();
 	void Draw();
-
 	std::vector<int> ground;
 };
+
+Ground::Ground()
+{
+	vector<int> ground(COLS - 2);
+}
