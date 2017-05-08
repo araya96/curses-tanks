@@ -184,8 +184,8 @@ void Shoot(Ground & ground, Player * players, int turn)
 	//double vx = cos(angle) * players[turn].power * 0.2;
 	
 	// sets initial player position
-	Vec2D p0(players[turn].position, LINES - ground.ground.at(players[turn].position));
-
+	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position));
+	p0.line = LINES - p0.line;
 
 	//double p0x = players[turn].position;
 	//double p0y = ground.ground.at(players[turn].position);
@@ -211,7 +211,7 @@ void Shoot(Ground & ground, Player * players, int turn)
 		//pNy = LINES - pNy;
 
 		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
-
+		pN.line = LINES - pN.line;
 
 
 		DetectHit(players, pN.column, pN.line, hit);
