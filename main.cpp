@@ -247,7 +247,8 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 			clear();
 			break;
 		}
-
+		
+		
 		// stops when shot lands
 		if (pN.line >= ground.ground.at((int)pN.column))
 		{
