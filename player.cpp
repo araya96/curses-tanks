@@ -12,8 +12,8 @@ void Player::Initialize()
 }
 
 // draws a player on the landscape
-void Player::Draw(Ground & ground)
+void Player::Draw(Ground & ground, char c)
 {
-	mvaddch(ground.ground.at(position) - 1, position + 1, '0');
+	mvaddch(ground.ground.at(position) - 1, position + 1, c);
 
 }

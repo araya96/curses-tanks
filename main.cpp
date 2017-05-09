@@ -156,9 +156,16 @@ void ProcessKeyboard(Player * players, int turn, int key)
 			players[turn].angle = 90.0;
 		}
 		break;
+	case 'r':
+		clear();
+		players[0].position = rand() % 50 + 1;;
+		break;
+	case 'l':
+		clear();
+		players[1].position = rand() % 50 + COLS - 52;
+		break;
 
 	default:
-		Sleep(30);
 		break;
 	}
 }
@@ -196,11 +203,12 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 
 	// converts degrees to radians
 	double angle = players[turn].angle / 180.0 * M_PI;
+
 	// calculates velocities
 	Vec2D v(cos(angle) * players[turn].power * 0.2, sin(angle) * players[turn].power * 0.2);
 	
 	// sets initial player position
-	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position+2));
+	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position+1));
 	p0.line = LINES - p0.line;
 
 	// flips direction for player 2
@@ -216,11 +224,8 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		double step = i / 5.0;
 
 		Vec2D a(wind, -.98);
-		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
-		
 		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
 		pN.line = LINES - pN.line;
-
 
 		DetectHit(players, ground, pN.column, pN.line, hit, i);
 
@@ -231,8 +236,8 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 			ground.ground.resize(0);
 			ground.Compute();
 			wind = ComputeWind();
-			players[0].position = rand() % 10 + 10;
-			players[1].position = rand() % 10 + COLS - 20;
+			players[0].position = rand() % 50 + 1;;
+			players[1].position = rand() % 50 + COLS - 52;
 			break;
 		}
 
@@ -242,7 +247,8 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 			clear();
 			break;
 		}
-
+		
+		
 		// stops when shot lands
 		if (pN.line >= ground.ground.at((int)pN.column))
 		{
@@ -286,8 +292,8 @@ int main()
 	Player players[2];
 	players[0].Initialize();
 	players[1].Initialize();
-	players[0].position = rand() % 10 + 10;
-	players[1].position = rand() % 10 + COLS - 20;
+	players[0].position = rand() % 50 + 1;;
+	players[1].position = rand() % 50 + COLS - 52;
 	
 	int turn = 0;
 	bool keep_going = true;
@@ -299,14 +305,25 @@ int main()
 		// drawing screen
 		border(0, 0, 0, 0, 0, 0, 0, 0);
 		ground.Draw();
-		players[0].Draw(ground);
-		players[1].Draw(ground);
+		players[0].Draw(ground, '#');
+		players[1].Draw(ground, 'O');
 		Display(players, turn, wind);
 
 		int key = getch();
 
 		ProcessKeyboard(players, turn, key);
 
+		// switch turn of person who used last resort key
+		if (key == 'l')
+		{
+			turn = 1 - turn;
+			continue;
+		}
+		if (key == 'r')
+		{
+			turn = 1 - turn;
+			continue;
+		}
 		// press enter to shoot
 		if (key == 10)
 		{
@@ -326,25 +343,29 @@ int main()
 				erase();
 				ground.ground.resize(0);
 				ground.Compute();
+				wind = ComputeWind();
 				players[0].Initialize();
 				players[1].Initialize();
-				players[0].position = rand() % 10 + 10;
-				players[1].position = rand() % 10 + COLS - 20;
+				players[0].position = rand() % 50 + 1;
+				players[1].position = rand() % 50 + COLS - 52;
 			}
-			if (players[1].hits > 2)
-			{
-				GameOver(keep_going, 1);
+		}
+		if (players[1].hits > 2)
+		{
+			GameOver(keep_going, 1);
 
-				// resets for new game
-				if (keep_going)
-				{
-					turn = 0;
-					ground.Compute();
-					players[0].Initialize();
-					players[1].Initialize();
-					players[0].position = rand() % 10 + 10;
-					players[1].position = rand() % 10 + COLS - 20;
-				}
+			// resets for new game
+			if (keep_going)
+			{
+				turn = 0;
+				erase();
+				ground.ground.resize(0);
+				ground.Compute();
+				wind = ComputeWind();
+				players[0].Initialize();
+				players[1].Initialize();
+				players[0].position = rand() % 50 + 1;;
+				players[1].position = rand() % 50 + COLS - 52;
 			}
 		}
 		refresh();
