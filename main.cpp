@@ -314,6 +314,8 @@ int main()
 			if (keep_going)
 			{
 				turn = 0;
+				erase();
+				ground.ground.resize(0);
 				ground.Compute();
 				players[0].Initialize();
 				players[1].Initialize();
