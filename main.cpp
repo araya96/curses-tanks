@@ -34,7 +34,7 @@ void Display(Player * players, int turn, double & wind)
 	{
 		attron(A_REVERSE);
 	}
-
+	attron(COLOR_PAIR(3));
 	move(1, 2);
 	addstr("Player 1");
 
@@ -60,6 +60,7 @@ void Display(Player * players, int turn, double & wind)
 
 	move(1, COLS / 2);
 	ss = stringstream();
+	attron(COLOR_PAIR(5));
 	if (wind < 0)
 	{
 		ss << "Wind: " << wind << " m/s West";
@@ -70,7 +71,7 @@ void Display(Player * players, int turn, double & wind)
 		ss << "Wind: " << wind << " m/s East";
 		addstr(ss.str().c_str());
 	}
-
+	attron(COLOR_PAIR(2));
 	if (turn == 1)
 	{
 		attron(A_REVERSE);
@@ -129,7 +130,7 @@ void GameOver(bool & keep_going, int turn)
 }
 
 // uses arrow keys to adjust settings
-void ProcessKeyboard(Player * players, int turn, int key)
+void ProcessKeyboard(Player * players, int turn, int key, double & wind)
 {
 	switch (key)
 	{
@@ -171,6 +172,24 @@ void ProcessKeyboard(Player * players, int turn, int key)
 	case 'l':
 		clear();
 		players[1].position = rand() % 50 + COLS - 53;
+		break;
+	case 'w':
+		if (turn == 0 && wind < 0)
+		{
+			wind = -ComputeWind();
+		}
+		if (turn == 0 && wind >= 0)
+		{
+			wind = ComputeWind();
+		}
+		if (turn == 1 && wind < 0)
+		{
+			wind = -ComputeWind();
+		}
+		if (turn == 1 && wind >= 0)
+		{
+			wind = ComputeWind();
+		}
 		break;
 
 	default:
@@ -270,8 +289,14 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		move((int)pN.line - 1, (int)pN.column + 1);
 
 		// only add stars when trajectory is visible
-		if (pN.line > 2)
+		if (pN.line > 2 && turn == 0)
 		{
+			attron(COLOR_PAIR(3));
+			addch('*');
+		}
+		if (pN.line > 2 && turn == 1)
+		{
+			attron(COLOR_PAIR(2));
 			addch('*');
 		}
 		if (pN.line < 2)
@@ -294,7 +319,12 @@ int main()
 	curs_set(0);
 	nodelay(stdscr, 1);
 	keypad(stdscr, true);
-
+	start_color();
+	init_pair(1, COLOR_WHITE, COLOR_BLACK);
+	init_pair(2, COLOR_RED, COLOR_BLACK);
+	init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(4, COLOR_GREEN, COLOR_BLACK);
+	init_pair(5, COLOR_CYAN, COLOR_BLACK);
 	// initializing things
 	srand((unsigned int)time(nullptr));
 	Ground ground;
@@ -313,15 +343,19 @@ int main()
 	while (keep_going)
 	{
 		// drawing screen
+		attron(COLOR_PAIR(1));
 		border(0, 0, 0, 0, 0, 0, 0, 0);
+		attron(COLOR_PAIR(4));
 		ground.Draw();
-		players[0].Draw(ground, '#');
+		attron(COLOR_PAIR(3));
+		players[0].Draw(ground, 'O');
+		attron(COLOR_PAIR(2));
 		players[1].Draw(ground, 'O');
 		Display(players, turn, wind);
 
 		int key = getch();
 
-		ProcessKeyboard(players, turn, key);
+		ProcessKeyboard(players, turn, key, wind);
 
 		// switch turn of person who used last resort key
 		if (key == 'l')
@@ -330,6 +364,12 @@ int main()
 			continue;
 		}
 		if (key == 'r')
+		{
+			turn = 1 - turn;
+			continue;
+		}
+		// switch turn of player who used change wind key
+		if (key == 'w')
 		{
 			turn = 1 - turn;
 			continue;
