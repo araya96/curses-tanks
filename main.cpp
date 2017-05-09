@@ -58,9 +58,9 @@ void Display(Player * players, int turn, double & wind)
 	ss << "Hits: " << players[0].hits;
 	addstr(ss.str().c_str());
 
-	move(1, COLS / 2);
+	move(1, 50);
 	ss = stringstream();
-	attron(COLOR_PAIR(5));
+	attron(COLOR_PAIR(1));
 	if (wind < 0)
 	{
 		ss << "Wind: " << wind << " m/s West";
@@ -71,7 +71,7 @@ void Display(Player * players, int turn, double & wind)
 		ss << "Wind: " << wind << " m/s East";
 		addstr(ss.str().c_str());
 	}
-	attron(COLOR_PAIR(2));
+	attron(COLOR_PAIR(5));
 	if (turn == 1)
 	{
 		attron(A_REVERSE);
@@ -282,6 +282,15 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		if (pN.line >= ground.ground.at((int)pN.column))
 		{
 			clear();
+
+			// leave crater
+			ground.ground.at((int)pN.column)++;
+
+			if (ground.ground.at((int)pN.column) >= LINES - 1)
+			{
+				ground.ground.at((int)pN.column)--;
+			}
+
 			break;
 		}
 
@@ -293,11 +302,13 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		{
 			attron(COLOR_PAIR(3));
 			addch('*');
+			Display(players, turn, wind);
 		}
 		if (pN.line > 2 && turn == 1)
 		{
-			attron(COLOR_PAIR(2));
+			attron(COLOR_PAIR(5));
 			addch('*');
+			Display(players, turn, wind);
 		}
 		if (pN.line < 2)
 		{
@@ -349,7 +360,7 @@ int main()
 		ground.Draw();
 		attron(COLOR_PAIR(3));
 		players[0].Draw(ground, 'O');
-		attron(COLOR_PAIR(2));
+		attron(COLOR_PAIR(5));
 		players[1].Draw(ground, 'O');
 		Display(players, turn, wind);
 
