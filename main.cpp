@@ -29,13 +29,12 @@ double ComputeWind()
 // sets up display of stats
 void Display(Player * players, int turn, double & wind)
 {
-	attron(COLOR_PAIR(1));
 	// highlights player whose turn it is
 	if (turn == 0)
 	{
 		attron(A_REVERSE);
 	}
-
+	attron(COLOR_PAIR(3));
 	move(1, 2);
 	addstr("Player 1");
 
@@ -61,6 +60,7 @@ void Display(Player * players, int turn, double & wind)
 
 	move(1, COLS / 2);
 	ss = stringstream();
+	attron(COLOR_PAIR(5));
 	if (wind < 0)
 	{
 		ss << "Wind: " << wind << " m/s West";
@@ -71,7 +71,7 @@ void Display(Player * players, int turn, double & wind)
 		ss << "Wind: " << wind << " m/s East";
 		addstr(ss.str().c_str());
 	}
-
+	attron(COLOR_PAIR(2));
 	if (turn == 1)
 	{
 		attron(A_REVERSE);
@@ -278,7 +278,7 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		}
 		if (pN.line > 2 && turn == 1)
 		{
-			attron(COLOR_PAIR(4));
+			attron(COLOR_PAIR(2));
 			addch('*');
 		}
 		if (pN.line < 2)
@@ -306,6 +306,7 @@ int main()
 	init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
 	init_pair(3, COLOR_YELLOW, COLOR_BLACK);
 	init_pair(4, COLOR_GREEN, COLOR_BLACK);
+	init_pair(5, COLOR_CYAN, COLOR_BLACK);
 	// initializing things
 	srand((unsigned int)time(nullptr));
 	Ground ground;
@@ -324,11 +325,13 @@ int main()
 	while (keep_going)
 	{
 		// drawing screen
+		attron(COLOR_PAIR(1));
 		border(0, 0, 0, 0, 0, 0, 0, 0);
+		attron(COLOR_PAIR(4));
 		ground.Draw();
 		attron(COLOR_PAIR(3));
 		players[0].Draw(ground, '#');
-		attron(COLOR_PAIR(4));
+		attron(COLOR_PAIR(2));
 		players[1].Draw(ground, 'O');
 		Display(players, turn, wind);
 
