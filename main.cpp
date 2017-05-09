@@ -32,7 +32,8 @@ void Display(Player * players, int turn, double & wind)
 	// highlights player whose turn it is
 	if (turn == 0)
 	{
-		attron(A_REVERSE);
+		init_pair(3, COLOR_BLACK, COLOR_YELLOW);
+		attron(COLOR_PAIR(3));
 	}
 
 	move(1, 2);
@@ -40,7 +41,7 @@ void Display(Player * players, int turn, double & wind)
 
 	if (turn == 0)
 	{
-		attroff(A_REVERSE);
+		attroff(COLOR_PAIR(3));
 	}
 
 	move(2, 2);
@@ -58,14 +59,14 @@ void Display(Player * players, int turn, double & wind)
 	ss << "Hits: " << players[0].hits;
 	addstr(ss.str().c_str());
 
-	move(1, COLS / 2);
+	move(1, 50);
 	ss = stringstream();
 	ss << "Wind: " << wind << " m/s West";
 	addstr(ss.str().c_str());
 
 	if (turn == 1)
 	{
-		attron(A_REVERSE);
+		attron(COLOR_PAIR(3));
 	}
 
 	move(1, COLS - 11);
@@ -73,7 +74,7 @@ void Display(Player * players, int turn, double & wind)
 
 	if (turn == 1)
 	{
-		attroff(A_REVERSE);
+		attroff(COLOR_PAIR(3));
 	}
 
 	move(2, COLS - 11);
@@ -93,12 +94,12 @@ void Display(Player * players, int turn, double & wind)
 }
 
 // asks if player wants to restart game
-void GameOver(bool & keep_going, int turn)
+void GameOver(bool & keep_going, int player)
 {
 	bool asking = true;
-	turn = turn + 1;
 	stringstream ss;
-	ss << "Player " << turn << " died.  Do you want to play again? (y/n)";
+	ss << "Player " << player << " died.  Do you want to play again? (y/n)";
+
 	while (asking)
 	{
 		clear();
@@ -247,6 +248,15 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		if (pN.line >= ground.ground.at((int)pN.column))
 		{
 			clear();
+
+			// leave crater
+			ground.ground.at((int)pN.column)++;
+
+			if (ground.ground.at((int)pN.column) >= LINES - 1)
+			{
+				ground.ground.at((int)pN.column)--;
+			}
+
 			break;
 		}
 
@@ -256,7 +266,12 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		// only add stars when trajectory is visible
 		if (pN.line > 2)
 		{
+			init_pair(1, COLOR_CYAN, COLOR_BLACK);
+			attron(COLOR_PAIR(1));
 			addch('*');
+			attroff(COLOR_PAIR(1));
+
+			Display(players, turn, wind);
 		}
 		if (pN.line < 2)
 		{
@@ -278,6 +293,7 @@ int main()
 	curs_set(0);
 	nodelay(stdscr, 1);
 	keypad(stdscr, true);
+	start_color();
 
 	// initializing things
 	srand((unsigned int)time(nullptr));
@@ -317,7 +333,7 @@ int main()
 		// checks if players are out of lives
 		if (players[0].hits > 2)
 		{
-			GameOver(keep_going, 0);
+			GameOver(keep_going, 1);
 
 			// resets for new game
 			if (keep_going)
@@ -331,22 +347,24 @@ int main()
 				players[0].position = rand() % 10 + 10;
 				players[1].position = rand() % 10 + COLS - 20;
 			}
-			if (players[1].hits > 2)
-			{
-				GameOver(keep_going, 1);
+		}
 
-				// resets for new game
-				if (keep_going)
-				{
-					turn = 0;
-					ground.Compute();
-					players[0].Initialize();
-					players[1].Initialize();
-					players[0].position = rand() % 10 + 10;
-					players[1].position = rand() % 10 + COLS - 20;
-				}
+		if (players[1].hits > 2)
+		{
+			GameOver(keep_going, 2);
+
+			// resets for new game
+			if (keep_going)
+			{
+				turn = 0;
+				ground.Compute();
+				players[0].Initialize();
+				players[1].Initialize();
+				players[0].position = rand() % 10 + 10;
+				players[1].position = rand() % 10 + COLS - 20;
 			}
 		}
+
 		refresh();
 	}
 	erase();

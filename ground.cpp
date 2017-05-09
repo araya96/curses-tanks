@@ -12,22 +12,27 @@ void Ground::Compute()
 	int current_height = LINES - LINES / base_height_divisor;
 	//int maximum_height = lines / max_height_divisor;
 
-	for (int i = 1; i < COLS - 1; i++) {
+	for (int i = 1; i < COLS - 1; i++)
+	{
 		int h = current_height;
 		int r = rand() % 10000;
-		if (r < 800) {
+
+		if (r < 800)
+		{
 			current_height++;
 			if (current_height >= LINES - 2)
 				current_height = LINES - 2;
 		}
-		else if (r < 1600) {
+
+		else if (r < 1600)
+		{
 			current_height--;
 			if (current_height < 1)
 				current_height = 1;
 		}
+
 		ground.push_back(h);
 	}
-	
 }
 
 // prints landscape with line drawing characters
@@ -36,6 +41,9 @@ void Ground::Draw()
 	for (size_t i = 0; i < ground.size(); i++)
 		{
 			move(ground.at(i), (int)i + 1);
+
+			init_pair(2, COLOR_GREEN, COLOR_BLACK);
+			attron(COLOR_PAIR(2));
 
 			// first int dealt with separately
 			if (i == 0)
@@ -58,6 +66,8 @@ void Ground::Draw()
 					addch(ACS_HLINE);
 				}
 			}
+
+			attroff(COLOR_PAIR(2));
 		}
 }
 
