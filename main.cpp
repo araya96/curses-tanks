@@ -60,8 +60,16 @@ void Display(Player * players, int turn, double & wind)
 
 	move(1, COLS / 2);
 	ss = stringstream();
-	ss << "Wind: " << wind << " m/s West";
-	addstr(ss.str().c_str());
+	if (wind < 0)
+	{
+		ss << "Wind: " << wind << " m/s West";
+		addstr(ss.str().c_str());
+	}
+	if (wind > 0)
+	{
+		ss << "Wind: " << wind << " m/s East";
+		addstr(ss.str().c_str());
+	}
 
 	if (turn == 1)
 	{
@@ -162,7 +170,7 @@ void ProcessKeyboard(Player * players, int turn, int key)
 		break;
 	case 'l':
 		clear();
-		players[1].position = rand() % 50 + COLS - 52;
+		players[1].position = rand() % 50 + COLS - 53;
 		break;
 
 	default:
@@ -171,7 +179,7 @@ void ProcessKeyboard(Player * players, int turn, int key)
 }
 
 // checks 9 spots around player for hit
-void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & hit, int i)
+void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & hit, int i, double & wind)
 {
 	if (i > 1)
 	{
@@ -181,6 +189,7 @@ void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & 
 			{
 				players[0].hits++;
 				hit = true;
+				wind = ComputeWind();
 			}
 		}
 
@@ -189,6 +198,8 @@ void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & 
 			if ((pNy >= ground.ground.at(players[1].position) - 1) && (pNy <= ground.ground.at(players[1].position) + 1))
 			{
 				players[1].hits++;
+				wind = ComputeWind();
+				wind = -wind;
 				hit = true;
 			}
 		}
@@ -227,7 +238,7 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
 		pN.line = LINES - pN.line;
 
-		DetectHit(players, ground, pN.column, pN.line, hit, i);
+		DetectHit(players, ground, pN.column, pN.line, hit, i, wind);
 
 		// reset landscape and player positions after hits
 		if (hit == true)
@@ -235,9 +246,8 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 			erase();
 			ground.ground.resize(0);
 			ground.Compute();
-			wind = ComputeWind();
 			players[0].position = rand() % 50 + 1;;
-			players[1].position = rand() % 50 + COLS - 52;
+			players[1].position = rand() % 50 + COLS - 53;
 			break;
 		}
 
@@ -293,7 +303,7 @@ int main()
 	players[0].Initialize();
 	players[1].Initialize();
 	players[0].position = rand() % 50 + 1;;
-	players[1].position = rand() % 50 + COLS - 52;
+	players[1].position = rand() % 50 + COLS - 53;
 	
 	int turn = 0;
 	bool keep_going = true;
@@ -347,7 +357,7 @@ int main()
 				players[0].Initialize();
 				players[1].Initialize();
 				players[0].position = rand() % 50 + 1;
-				players[1].position = rand() % 50 + COLS - 52;
+				players[1].position = rand() % 50 + COLS - 53;
 			}
 		}
 		if (players[1].hits > 2)
@@ -361,11 +371,11 @@ int main()
 				erase();
 				ground.ground.resize(0);
 				ground.Compute();
-				wind = ComputeWind();
+				wind = -ComputeWind();
 				players[0].Initialize();
 				players[1].Initialize();
 				players[0].position = rand() % 50 + 1;;
-				players[1].position = rand() % 50 + COLS - 52;
+				players[1].position = rand() % 50 + COLS - 53;
 			}
 		}
 		refresh();
