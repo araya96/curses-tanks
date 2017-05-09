@@ -5,7 +5,7 @@
 struct Player
 {
 	void Initialize();
-	void Draw(Ground & ground);
+	void Draw(Ground & ground, char c);
 	double angle;
 	double power;
 	int position;
