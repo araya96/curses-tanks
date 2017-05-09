@@ -27,7 +27,7 @@ double ComputeWind()
 
 
 // sets up display of stats
-void Display(Player * players, int turn, double wind)
+void Display(Player * players, int turn, double & wind)
 {
 	// highlights player whose turn it is
 	if (turn == 0)
@@ -190,7 +190,7 @@ void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & 
 
 
 // fires at opponent
-void Shoot(Ground & ground, Player * players, int turn, double wind)
+void Shoot(Ground & ground, Player * players, int turn, double & wind)
 {
 	bool hit = false;
 
@@ -230,6 +230,7 @@ void Shoot(Ground & ground, Player * players, int turn, double wind)
 			erase();
 			ground.ground.resize(0);
 			ground.Compute();
+			wind = ComputeWind();
 			players[0].position = rand() % 10 + 10;
 			players[1].position = rand() % 10 + COLS - 20;
 			break;
