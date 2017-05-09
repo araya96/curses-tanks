@@ -29,6 +29,7 @@ double ComputeWind()
 // sets up display of stats
 void Display(Player * players, int turn, double & wind)
 {
+	attron(COLOR_PAIR(1));
 	// highlights player whose turn it is
 	if (turn == 0)
 	{
@@ -270,8 +271,14 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 		move((int)pN.line - 1, (int)pN.column + 1);
 
 		// only add stars when trajectory is visible
-		if (pN.line > 2)
+		if (pN.line > 2 && turn == 0)
 		{
+			attron(COLOR_PAIR(3));
+			addch('*');
+		}
+		if (pN.line > 2 && turn == 1)
+		{
+			attron(COLOR_PAIR(4));
 			addch('*');
 		}
 		if (pN.line < 2)
@@ -294,7 +301,11 @@ int main()
 	curs_set(0);
 	nodelay(stdscr, 1);
 	keypad(stdscr, true);
-
+	start_color();
+	init_pair(1, COLOR_WHITE, COLOR_BLACK);
+	init_pair(2, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(3, COLOR_YELLOW, COLOR_BLACK);
+	init_pair(4, COLOR_GREEN, COLOR_BLACK);
 	// initializing things
 	srand((unsigned int)time(nullptr));
 	Ground ground;
@@ -315,7 +326,9 @@ int main()
 		// drawing screen
 		border(0, 0, 0, 0, 0, 0, 0, 0);
 		ground.Draw();
+		attron(COLOR_PAIR(3));
 		players[0].Draw(ground, '#');
+		attron(COLOR_PAIR(4));
 		players[1].Draw(ground, 'O');
 		Display(players, turn, wind);
 
