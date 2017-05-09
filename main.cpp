@@ -208,7 +208,7 @@ void Shoot(Ground & ground, Player * players, int turn, double & wind)
 	Vec2D v(cos(angle) * players[turn].power * 0.2, sin(angle) * players[turn].power * 0.2);
 	
 	// sets initial player position
-	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position+2));
+	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position+1));
 	p0.line = LINES - p0.line;
 
 	// flips direction for player 2
@@ -312,6 +312,17 @@ int main()
 
 		ProcessKeyboard(players, turn, key);
 
+		// switch turn of person who used last resort key
+		if (key == 'l')
+		{
+			turn = 1 - turn;
+			continue;
+		}
+		if (key == 'r')
+		{
+			turn = 1 - turn;
+			continue;
+		}
 		// press enter to shoot
 		if (key == 10)
 		{
