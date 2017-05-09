@@ -130,7 +130,7 @@ void GameOver(bool & keep_going, int turn)
 }
 
 // uses arrow keys to adjust settings
-void ProcessKeyboard(Player * players, int turn, int key)
+void ProcessKeyboard(Player * players, int turn, int key, double & wind)
 {
 	switch (key)
 	{
@@ -172,6 +172,24 @@ void ProcessKeyboard(Player * players, int turn, int key)
 	case 'l':
 		clear();
 		players[1].position = rand() % 50 + COLS - 53;
+		break;
+	case 'w':
+		if (turn == 0 && wind < 0)
+		{
+			wind = -ComputeWind();
+		}
+		if (turn == 0 && wind >= 0)
+		{
+			wind = ComputeWind();
+		}
+		if (turn == 1 && wind < 0)
+		{
+			wind = -ComputeWind();
+		}
+		if (turn == 1 && wind >= 0)
+		{
+			wind = ComputeWind();
+		}
 		break;
 
 	default:
@@ -337,7 +355,7 @@ int main()
 
 		int key = getch();
 
-		ProcessKeyboard(players, turn, key);
+		ProcessKeyboard(players, turn, key, wind);
 
 		// switch turn of person who used last resort key
 		if (key == 'l')
@@ -346,6 +364,12 @@ int main()
 			continue;
 		}
 		if (key == 'r')
+		{
+			turn = 1 - turn;
+			continue;
+		}
+		// switch turn of player who used change wind key
+		if (key == 'w')
 		{
 			turn = 1 - turn;
 			continue;
