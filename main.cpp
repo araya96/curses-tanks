@@ -81,15 +81,17 @@ void Display(Player * players, int turn)
 }
 
 // asks if player wants to restart game
-void GameOver(bool & keep_going)
+void GameOver(bool & keep_going, int turn)
 {
 	bool asking = true;
-
+	turn = turn + 1;
+	stringstream ss;
+	ss << "Player " << turn << " died.  Do you want to play again? (y/n)";
 	while (asking)
 	{
 		clear();
 		move(13, 37);
-		addstr("You died.  Do you want to play again? (y/n)");
+		addstr(ss.str().c_str());
 		char answer = getch();
 
 		if (answer == 'n')
@@ -149,23 +151,26 @@ void ProcessKeyboard(Player * players, int turn, int key)
 }
 
 // checks 9 spots around player for hit
-void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & hit)
+void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & hit, int i)
 {
-	if ((pNx >= players[0].position - 1) && (pNx <= players[0].position + 1))
+	if (i > 1)
 	{
-		if ((pNy >= ground.ground.at(players[0].position) - 1) && (pNy <= ground.ground.at(players[0].position) + 1))
+		if ((pNx >= players[0].position - 1) && (pNx <= players[0].position + 1))
 		{
-			players[0].hits++;
-			hit = true;
+			if ((pNy >= ground.ground.at(players[0].position) - 1) && (pNy <= ground.ground.at(players[0].position) + 1))
+			{
+				players[0].hits++;
+				hit = true;
+			}
 		}
-	}
 
-	if ((pNx >= players[1].position - 1) && (pNx <= players[1].position + 1))
-	{
-		if ((pNy >= ground.ground.at(players[1].position) - 1) && (pNy <= ground.ground.at(players[1].position) + 1))
+		if ((pNx >= players[1].position - 1) && (pNx <= players[1].position + 1))
 		{
-			players[1].hits++;
-			hit = true;
+			if ((pNy >= ground.ground.at(players[1].position) - 1) && (pNy <= ground.ground.at(players[1].position) + 1))
+			{
+				players[1].hits++;
+				hit = true;
+			}
 		}
 	}
 }
@@ -181,7 +186,7 @@ void Shoot(Ground & ground, Player * players, int turn)
 	Vec2D v(cos(angle) * players[turn].power * 0.2, sin(angle) * players[turn].power * 0.2);
 	
 	// sets initial player position
-	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position));
+	Vec2D p0(players[turn].position, ground.ground.at(players[turn].position+2));
 	p0.line = LINES - p0.line;
 
 	// flips direction for player 2
@@ -196,14 +201,14 @@ void Shoot(Ground & ground, Player * players, int turn)
 		// loops through time steps
 		double step = i / 5.0;
 
-		Vec2D a(0, -.98);
+		Vec2D a(0, -.75);
 		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
 		
 		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
 		pN.line = LINES - pN.line;
 
 
-		DetectHit(players, ground, pN.column, pN.line, hit);
+		DetectHit(players, ground, pN.column, pN.line, hit, i);
 
 		// reset landscape and player positions after hits
 		if (hit == true)
@@ -237,10 +242,16 @@ void Shoot(Ground & ground, Player * players, int turn)
 		if (pN.line > 2)
 		{
 			addch('*');
-			refresh();
-			// shot happens incrementally
-			Sleep(30);
 		}
+		if (pN.line < 2)
+		{
+			Sleep(30);
+			continue;
+		}
+	
+		refresh();
+		// shot happens incrementally
+		Sleep(30);
 	}
 }
 
@@ -295,9 +306,9 @@ int main()
 		}
 
 		// checks if players are out of lives
-		if (players[0].hits > 2 || players[1].hits > 2)
+		if (players[0].hits > 2)
 		{
-			GameOver(keep_going);
+			GameOver(keep_going, 0);
 
 			// resets for new game
 			if (keep_going)
@@ -308,6 +319,21 @@ int main()
 				players[1].Initialize();
 				players[0].position = rand() % 10 + 10;
 				players[1].position = rand() % 10 + COLS - 20;
+			}
+			if (players[1].hits > 2)
+			{
+				GameOver(keep_going, 1);
+
+				// resets for new game
+				if (keep_going)
+				{
+					turn = 0;
+					ground.Compute();
+					players[0].Initialize();
+					players[1].Initialize();
+					players[0].position = rand() % 10 + 10;
+					players[1].position = rand() % 10 + COLS - 20;
+				}
 			}
 		}
 		refresh();
