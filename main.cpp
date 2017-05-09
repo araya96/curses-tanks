@@ -18,9 +18,16 @@
 
 using namespace std;
 
+double ComputeWind()
+{
+	double wind = rand() % 100;
+	wind = wind / 100;
+	return wind;
+}
+
 
 // sets up display of stats
-void Display(Player * players, int turn)
+void Display(Player * players, int turn, double & wind)
 {
 	// highlights player whose turn it is
 	if (turn == 0)
@@ -49,6 +56,11 @@ void Display(Player * players, int turn)
 	move(4, 2);
 	ss = stringstream();
 	ss << "Hits: " << players[0].hits;
+	addstr(ss.str().c_str());
+
+	move(1, COLS / 2);
+	ss = stringstream();
+	ss << "Wind: " << wind << " m/s West";
 	addstr(ss.str().c_str());
 
 	if (turn == 1)
@@ -146,6 +158,7 @@ void ProcessKeyboard(Player * players, int turn, int key)
 		break;
 
 	default:
+		Sleep(30);
 		break;
 	}
 }
@@ -177,9 +190,10 @@ void DetectHit(Player * players, Ground ground,  double pNx, double pNy, bool & 
 
 
 // fires at opponent
-void Shoot(Ground & ground, Player * players, int turn)
+void Shoot(Ground & ground, Player * players, int turn, double & wind)
 {
 	bool hit = false;
+
 	// converts degrees to radians
 	double angle = players[turn].angle / 180.0 * M_PI;
 	// calculates velocities
@@ -201,7 +215,7 @@ void Shoot(Ground & ground, Player * players, int turn)
 		// loops through time steps
 		double step = i / 5.0;
 
-		Vec2D a(0, -.75);
+		Vec2D a(wind, -.98);
 		// curr pos = init pos + (time step * vel) + ((time step^2 + time step) * grav)/2
 		
 		Vec2D pN = p0 + (v * step) + (a * (step * step + step)) / 2;
@@ -216,6 +230,7 @@ void Shoot(Ground & ground, Player * players, int turn)
 			erase();
 			ground.ground.resize(0);
 			ground.Compute();
+			wind = ComputeWind();
 			players[0].position = rand() % 10 + 10;
 			players[1].position = rand() % 10 + COLS - 20;
 			break;
@@ -273,17 +288,11 @@ int main()
 	players[1].Initialize();
 	players[0].position = rand() % 10 + 10;
 	players[1].position = rand() % 10 + COLS - 20;
-	double x1 =(double)(ground.ground.at(players[0].position - 1));
-	double x2 = (double)(ground.ground.at(players[1].position - 1));
-	double y1 =(double)(players[0].position + 1);
-	double y2 = (double)(players[1].position + 1);
-
 	
 	int turn = 0;
 	bool keep_going = true;
-
+	double wind = ComputeWind();
 	
-
 	// gameplay loop
 	while (keep_going)
 	{
@@ -292,7 +301,7 @@ int main()
 		ground.Draw();
 		players[0].Draw(ground);
 		players[1].Draw(ground);
-		Display(players, turn);
+		Display(players, turn, wind);
 
 		int key = getch();
 
@@ -301,7 +310,7 @@ int main()
 		// press enter to shoot
 		if (key == 10)
 		{
-			Shoot(ground, players, turn);
+			Shoot(ground, players, turn, wind);
 			turn = 1 - turn;
 		}
 
