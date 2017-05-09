@@ -166,7 +166,6 @@ void ProcessKeyboard(Player * players, int turn, int key)
 		break;
 
 	default:
-		Sleep(30);
 		break;
 	}
 }
@@ -332,6 +331,7 @@ int main()
 				erase();
 				ground.ground.resize(0);
 				ground.Compute();
+				wind = ComputeWind();
 				players[0].Initialize();
 				players[1].Initialize();
 				players[0].position = rand() % 50 + 1;
@@ -349,6 +349,7 @@ int main()
 				erase();
 				ground.ground.resize(0);
 				ground.Compute();
+				wind = ComputeWind();
 				players[0].Initialize();
 				players[1].Initialize();
 				players[0].position = rand() % 50 + 1;;
